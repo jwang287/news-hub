@@ -47,7 +47,8 @@ let state = {
     news: [],
     currentCategory: 'all',
     isLoading: false,
-    readIds: new Set()
+    readIds: new Set(),
+    isSample: false
 };
 
 // ===== 初始化 =====
@@ -213,9 +214,16 @@ async function loadNews(force = false) {
         
         const data = await response.json();
         state.news = data.news || [];
+        state.isSample = data.isSample || false;
         
         renderNews();
         updateTime(data.lastUpdate);
+        
+        // 如果是示例数据，显示提示
+        if (state.isSample) {
+            elements.updateStatus.textContent = '示例数据';
+            elements.updateStatus.style.color = '#f59e0b';
+        }
         
     } catch (error) {
         console.error('加载新闻失败:', error);
