@@ -1,0 +1,41 @@
+# Cloudflare Functions - Backend 配置
+name = "news-api"
+main = "./api/index.ts"
+compatibility_date = "2024-01-01"
+
+# 启用 Node.js 兼容模式
+compatibility_flags = ["nodejs_compat"]
+
+# D1 数据库绑定
+[[d1_databases]]
+binding = "DB"
+database_name = "news-db"
+database_id = "your-d1-database-id-here"
+
+# R2 存储桶绑定
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "news-media"
+
+# KV 缓存（可选）
+[[kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id"
+
+# 环境变量
+[vars]
+ENVIRONMENT = "production"
+R2_PUBLIC_URL = "https://media.your-domain.com"
+
+# 密钥（敏感信息）
+[env.production.vars]
+JWT_SECRET = "your-jwt-secret-here"
+
+# 路由规则
+[[routes]]
+pattern = "api.your-domain.com/*"
+custom_domain = true
+
+# Cron 定时任务（每小时更新）
+[triggers]
+crons = ["0 * * * *"]
