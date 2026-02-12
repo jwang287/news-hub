@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.allorigins.win https://r.jina.ai; img-src 'self' data: https:;">
+    <title>News Hub - 个人新闻聚合</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <!-- 密码验证遮罩层 -->
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-container">
+            <div class="auth-box">
+                <div class="auth-icon">🔒</div>
+                <h2>News Hub</h2>
+                <p class="auth-subtitle">个人新闻聚合平台</p>
+                
+                <div id="password-form">
+                    <div class="input-group">
+                        <input 
+                            type="password" 
+                            id="password-input" 
+                            placeholder="请输入访问密码" 
+                            autocomplete="off"
+                            maxlength="20"
+                        >
+                        <button id="submit-btn" class="btn-primary">进入</button>
+                    </div>
+                    <p id="error-msg" class="error-msg"></p>
+                </div>
+
+                <div id="lock-screen" class="lock-screen hidden">
+                    <div class="lock-icon">⏱️</div>
+                    <h3>访问已锁定</h3>
+                    <p>连续输错密码次数过多</p>
+                    <div class="countdown">
+                        <span id="countdown-timer">03:00</span>
+                    </div>
+                    <p class="lock-hint">请等待倒计时结束后重试</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主应用界面 -->
+    <div id="app" class="app hidden">
+        <!-- 顶部导航 -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">📰</span>
+                    <span class="logo-text">News Hub</span>
+                </div>
+
+                <div class="header-actions">
+                    <button id="refresh-btn" class="btn-icon" title="立即更新">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                    </button>
+
+                    <button id="theme-toggle" class="btn-icon" title="切换主题">
+                        <svg class="icon sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg class="icon moon-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+
+                    <button id="logout-btn" class="btn-icon" title="退出登录">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 更新时间 -->
+        <div class="update-bar">
+            <span class="update-label">最后更新</span>
+            <span id="update-time">加载中...</span>
+            <span id="update-status" class="update-status"></span>
+        </div>
+
+        <!-- 分类标签 -->
+        <nav class="category-nav">
+            <button class="category-btn active" data-category="all">全部</button>
+            <button class="category-btn" data-category="ai">🤖 AI前沿</button>
+            <button class="category-btn" data-category="tech">💻 科技动态</button>
+            <button class="category-btn" data-category="finance">💰 财经要闻</button>
+            <button class="category-btn urgent" data-category="breaking">🔴 突发新闻</button>
+        </nav>
+
+        <!-- 新闻内容区 -->
+        <main class="news-container">
+            <!-- 骨架屏 -->
+            <div id="skeleton" class="skeleton-wrapper">
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            </div>
+
+            <!-- 新闻列表 -->
+            <div id="news-list" class="news-list"></div>
+
+            <!-- 空状态 -->
+            <div id="empty-state" class="empty-state hidden">
+                <div class="empty-icon">📭</dive
+                <h3>暂无新闻</h3>
+                <p>点击刷新按钮获取最新内容</p>
+            </div>
+
+            <!-- 错误状态 -->
+            <div id="error-state" class="error-state hidden">
+                <div class="error-icon">⚠️</div>
+                <h3>加载失败</h3>
+                <p id="error-text">网络连接异常，请稍后重试</p>
+                <button id="retry-btn" class="btn-primary">重新加载</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- 新闻详情模态框 -->
+    <div id="news-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            
+            <div class="modal-header">
+                <span id="modal-category" class="category-badge"></span>
+                <span id="modal-time" class="time-badge"></span>
+            </div>
+            
+            <h2 id="modal-title"></h2>
+            
+            <div id="modal-summary" class="summary-box">
+                <strong>TL;DR</strong>
+                <p></p>
+            </div>
+            
+            <div id="modal-body" class="modal-body"></div>
+            
+            <a id="modal-link" class="source-link" target="_blank" rel="noopener">
+                查看原文 &rarr;
+            </a>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

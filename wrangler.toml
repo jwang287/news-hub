@@ -1,0 +1,44 @@
+# Cloudflare Pages 配置
+name = "news-hub"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 构建配置（静态站点无需构建）
+[build]
+command = ""
+
+# 环境变量
+[vars]
+DOMAIN = "news-hub.pages.dev"
+
+# KV 命名空间绑定
+[[kv_namespaces]]
+binding = "NEWS_KV"
+id = "your_kv_namespace_id_here"
+
+# Cron 定时任务 - 每小时执行一次
+[triggers]
+crons = ["0 * * * *"]
+
+# 路由规则
+[[routes]]
+pattern = "/api/*"
+custom_domain = false
+
+# 环境配置
+[env.production]
+name = "news-hub-prod"
+
+[env.production.vars]
+DOMAIN = "your-domain.com"
+
+[[env.production.kv_namespaces]]
+binding = "NEWS_KV"
+id = "your_production_kv_id"
+
+[env.staging]
+name = "news-hub-staging"
+
+[[env.staging.kv_namespaces]]
+binding = "NEWS_KV"
+id = "your_staging_kv_id"
